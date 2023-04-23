@@ -3,10 +3,11 @@ from torch import nn
 from torch.nn import functional as F
 
 torch.manual_seed(311)
-""" 
-Base model of VGG16
-"""
+
 class VGG16(nn.Module):
+    """ 
+    Base model of VGG16
+    """
     def __init__(self, num_classes=10):
         super(VGG16, self).__init__()
         self.layer1 = nn.Sequential(
