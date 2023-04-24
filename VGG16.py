@@ -145,9 +145,9 @@ class SimpleVGG16(nn.Module):
         return block
 
 if __name__ == '__main__':
-    x = torch.rand(1, 3, 224, 224) # 현재의 이슈: Batch size 1일 경우 가능, batch size 설정 어려움
+    x = torch.rand(3, 3, 224, 224) # 현재의 이슈: Batch size 1일 경우 가능, batch size 설정 어려움
     model = SimpleVGG16()
-    # print(model)
+    print(model)
     output = model(x)
     print('-'*50)
     print(output)
