@@ -40,11 +40,12 @@ class Standard(nn.Module):
     expansion = 1 # global 
     def __init__(self, in_features, out_features, downsample=None, residual=True, stride=1):
         super(Standard, self).__init__()
-        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1)
+        # BatchNorm에 bias가 포함되어 있으므로, conv2d는 bias = False호 설정
+        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn_1 = nn.BatchNorm2d(out_features)
         
-        self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features*self.expansion , kernel_size=3, stride=stride, padding=1)
-        self.bn_2 = nn.BatchNorm2d(out_features * self.expansion)
+        self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features*self.expansion , kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn_2 = nn.BatchNorm2d(out_features*self.expansion)
         
         self.downsample = downsample
         self.residual = residual
@@ -53,12 +54,15 @@ class Standard(nn.Module):
     
     def forward(self, x):
         identity = x.clone()
+        print(identity.shape)
         out = self.relu(self.bn_1(self.conv_1(x)))
         out = self.bn_2(self.conv_2(out))
         if self.downsample is not None: 
             identity = self.downsample(identity)
         if self.residual is True: 
             out += identity
+        
+        print(out.shape)
         out = self.relu(out)
         return out
 
@@ -89,8 +93,9 @@ class ResNet(nn.Module):# 34-layer plain
         downsample = None
         layers = []
         if stride != 1 or self.in_features != channel*Block.expansion: 
+            # projection mapping using 1x1 conv
             downsample = nn.Sequential(
-                nn.Conv2d(in_channels=self.in_features, out_channels=channel*Block.expansion, kernel_size=1, stride=stride, padding=0), 
+                nn.Conv2d(in_channels=self.in_features, out_channels=channel*Block.expansion, kernel_size=1, stride=stride), 
                 nn.BatchNorm2d(channel*Block.expansion)
             )
         layers.append(Block(self.in_features, channel, downsample=downsample, residual=self.residual_block, stride=stride))
@@ -111,6 +116,7 @@ class ResNet(nn.Module):# 34-layer plain
         out = self.layer4(out)
         print(out.shape)
         out = self.layer5(out)
+        print(out.shape)
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = self.fc(out)
@@ -118,9 +124,7 @@ class ResNet(nn.Module):# 34-layer plain
 
 if __name__ == '__main__':
     x = torch.rand(2, 3, 224, 224)
-    # bottleneck = BottleNeck(64, 64)
-    # print(bottleneck)
-    model = ResNet(Block=BottleNeck, block_num=[3, 4, 6, 3], channel_size=[64, 128, 256, 512], num_channels=3, num_classes=2, residual_block=True)
-    print(model)
+    model = ResNet(Block=Standard, block_num=[3, 4, 6, 3], channel_size=[64, 128, 256, 512], num_channels=3, num_classes=2, residual_block=True)
+    # print(model)
     output = model(x)
     print(output)
