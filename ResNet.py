@@ -4,13 +4,33 @@ from torch.nn import functional as F
 
 torch.manual_seed(311)
 
+""" <Reference> 
+[1] https://github.com/pytorch/vision/blob/6db1569c89094cf23f3bc41f79275c45e9fcb3f3/torchvision/models/resnet.py#L124
+[2] https://github.com/JayPatwardhan/ResNet-PyTorch/blob/master/ResNet/ResNet.py
+"""
+
+""" 
+<<< 23.05.02 기록 >>> 
+(1) Bottleneck: 
+- 1x1 conv의 기능은 channel attention의 역할을 할 수 있음
+- channel을 키우는 것이 도움이 될 것
+- bottleneck은 plain 모델보다 parameter의 수가 적음
+(2) Residual Block: 
+- Gradient vanishing을 방지하기 위함
+(3) Stride and Padding
+- padding은 영상의 사이즈를 유지하기 위함
+- Stride를 통해서 영상의 사이즈를 2배로 줄여줌
+- 처음 7x7 conv를 사용한 이유로는 224x224 사이즈의 영상이 매우 크기에 초반에 영상의 사이즈를 줄여 특징을 추출
+(4) 이후 코드 작성 관련
+- 이후 코드 작성에 있어 참고하지 않고 할 수 있는데까지 하고서 함께 논의 후 코드 수정하는 방향으로 진행
+"""
+
 class BottleNeck(nn.Module):
     """ BottleNeck의 핵심은 1x1 Conv. ; Three-laer bottleneck block """
     expansion = 4
     def __init__(self, in_features, out_features, downsample=None, residual=True, stride=1):
         super(BottleNeck, self).__init__()
-        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=1, stride=1, padding=0, bias=False) # 1x1 conv, reducing dimension
-        self.bn_1 = nn.BatchNorm2d(out_features)
+        self.bn_1 = nn.BatchNorm2d(out_features) # nn module 
 
         self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # 3x3 conv
         self.bn_2 = nn.BatchNorm2d(out_features)
@@ -30,7 +50,7 @@ class BottleNeck(nn.Module):
         out = self.bn_3(self.conv_3(out)) # the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
         if self.downsample is not None: # downsample 
             identity = self.downsample(identity)
-        if self.residual is True: 
+        if self.residual is True: # gradient vanishing 방지를 위함
             out += identity # shortcut connection simply perform identity mapping
         out = self.relu(out)
         return out
