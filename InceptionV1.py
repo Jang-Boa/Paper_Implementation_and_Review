@@ -4,18 +4,19 @@ from torch.nn import functional as F
 
 torch.manual_seed(311)
 
-class InceptionBlock(nn.Module):
+class InceptionBlock(nn.Module): 
+    """ Inception Block """
     def __init__(self, in_features):
         super(InceptionBlock, self).__init__()
         self.in_features = in_features
-        self.inception1 = nn.Sequential(
+        self.layer1 = nn.Sequential(
             nn.Conv2d(in_channels=self.in_features, out_channels=64, kernel_size=1, stride=1, padding=0),
         )
-        self.inception2 = nn.Sequential(
+        self.layer2 = nn.Sequential(
             nn.Conv2d(in_channels=self.in_features, out_channels=96, kernel_size=1, stride=1, padding=0),
             nn.Conv2d(in_channels=96, out_channels=128, kernel_size=3, stride=1, padding=1)
         )
-        self.inception3 = nn.Sequential(
+        self.layer3 = nn.Sequential(
             nn.Conv2d(in_channels=self.in_features, out_channels=16, kernel_size=1, stride=1, padding=1),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=1)
         )
@@ -25,11 +26,11 @@ class InceptionBlock(nn.Module):
         )
         
     def forward(self, x):
-        out1 = self.inception1(x)
+        out1 = self.layer1(x)
         print(out1.shape)
-        out2 = self.inception2(x)
+        out2 = self.layer2(x)
         print(out2.shape)
-        out3 = self.inception3(x)
+        out3 = self.layer3(x)
         print(out3.shape)
         out4 = self.proj(x)
         print(out4.shape)
@@ -48,8 +49,8 @@ class GoogLeNet(nn.Module):
             nn.Conv2d(in_channels=192, out_channels=192, kernel_size=3, stride=1, padding=1),
             # nn.LocalResponseNorm(self.out_features*3/2), 
         )
-        self.inception_block1 = InceptionBlock(in_features=192)
-        self.inception_block2 = 
+        self.inception1 = InceptionBlock(in_features=192)
+        # self.inception_block2 = 
         
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -64,13 +65,15 @@ class GoogLeNet(nn.Module):
         print(out.shape)
         out = self.relu(self.stem2(out))
         print(out.shape)
-        out = self.inception(out)
+        out = self.maxpool(out)
+        print(out.shape)
+        out = self.inception1(out)
         print(out.shape)
         out = self.avgpool(out)
-        out = torch.flatten(out, 1)
-        print(out.shape)
-        out = self.dropout(out)
-        out = self.fc(out)
+        # out = torch.flatten(out, 1)
+        # print(out.shape)
+        # out = self.dropout(out)
+        # out = self.fc(out)
         
         return out
     
@@ -79,4 +82,5 @@ if __name__ == "__main__":
     x = torch.randn(2, 3, 224, 224)
     model = GoogLeNet()
     output = model(x)
-    print(model)
+    # print(model)
+    # print(output.shape)
