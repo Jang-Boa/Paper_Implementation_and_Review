@@ -1,39 +1,38 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torchsummary import summary
 
 torch.manual_seed(311)
 
 class InceptionBlock(nn.Module): 
-    """ Inception Block """
-    def __init__(self, in_features):
+    """ Inception Block
+    23.05.08 패턴을 모르겠음
+    """
+    def __init__(self, in_features, layer1_feature, layer2_feature, layer3_feature, layer4_feature):
         super(InceptionBlock, self).__init__()
         self.in_features = in_features
         self.layer1 = nn.Sequential(
-            nn.Conv2d(in_channels=self.in_features, out_channels=64, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(in_channels=self.in_features, out_channels=layer1_feature[0], kernel_size=1, stride=1, padding=0),
         )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=self.in_features, out_channels=96, kernel_size=1, stride=1, padding=0),
-            nn.Conv2d(in_channels=96, out_channels=128, kernel_size=3, stride=1, padding=1)
+            nn.Conv2d(in_channels=self.in_features, out_channels=layer2_feature[0], kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(in_channels=layer2_feature[0], out_channels=layer2_feature[1], kernel_size=3, stride=1, padding=1)
         )
         self.layer3 = nn.Sequential(
-            nn.Conv2d(in_channels=self.in_features, out_channels=16, kernel_size=1, stride=1, padding=1),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=1)
+            nn.Conv2d(in_channels=self.in_features, out_channels=layer3_feature[0], kernel_size=1, stride=1, padding=1),
+            nn.Conv2d(in_channels=layer3_feature[0], out_channels=layer3_feature[1], kernel_size=5, stride=1, padding=1)
         )
         self.proj = nn.Sequential(
             nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
-            nn.Conv2d(in_channels=self.in_features, out_channels=32, kernel_size=1, stride=1, padding=0)
+            nn.Conv2d(in_channels=self.in_features, out_channels=layer4_feature[0], kernel_size=1, stride=1, padding=0)
         )
         
     def forward(self, x):
         out1 = self.layer1(x)
-        print(out1.shape)
         out2 = self.layer2(x)
-        print(out2.shape)
         out3 = self.layer3(x)
-        print(out3.shape)
         out4 = self.proj(x)
-        print(out4.shape)
         out = torch.cat([out1, out2, out3, out4], dim=1)
         return out
 
@@ -49,32 +48,43 @@ class GoogLeNet(nn.Module):
             nn.Conv2d(in_channels=192, out_channels=192, kernel_size=3, stride=1, padding=1),
             # nn.LocalResponseNorm(self.out_features*3/2), 
         )
-        self.inception1 = InceptionBlock(in_features=192)
-        # self.inception_block2 = 
+        """ Pattern을 알면 코드를 줄일 수 있을 것 """
+        self.inception3a = InceptionBlock(in_features=192, layer1_feature=[64], layer2_feature=[96, 128], layer3_feature=[16, 32], layer4_feature=[32])
+        self.inception3b = InceptionBlock(in_features=256, layer1_feature=[128], layer2_feature=[128, 192], layer3_feature=[32, 96], layer4_feature=[64])
+        self.inception4a = InceptionBlock(in_features=480, layer1_feature=[192], layer2_feature=[96, 208], layer3_feature=[16, 48], layer4_feature=[64])
+        self.inception4b = InceptionBlock(in_features=512, layer1_feature=[160], layer2_feature=[112, 224], layer3_feature=[24, 64], layer4_feature=[64])
+        self.inception4c = InceptionBlock(in_features=512, layer1_feature=[128], layer2_feature=[128, 256], layer3_feature=[24, 64], layer4_feature=[64])
+        self.inception4d = InceptionBlock(in_features=512, layer1_feature=[112], layer2_feature=[144, 288], layer3_feature=[32, 64], layer4_feature=[64])
+        self.inception4e = InceptionBlock(in_features=528, layer1_feature=[256], layer2_feature=[160, 320], layer3_feature=[32, 128], layer4_feature=[128])
+        self.inception5a = InceptionBlock(in_features=832, layer1_feature=[256], layer2_feature=[160, 320], layer3_feature=[32, 128], layer4_feature=[128])
+        self.inception5b = InceptionBlock(in_features=832, layer1_feature=[384], layer2_feature=[192, 384], layer3_feature=[48, 128], layer4_feature=[128])
         
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.avgpool = nn.AvgPool2d(kernel_size=7, stride=1, padding=1)
+        self.avgpool = nn.AvgPool2d(kernel_size=7, stride=1, padding=0)
         self.dropout = nn.Dropout(p=0.4)
         self.fc = nn.Linear(in_features=1024, out_features=num_classes)
         
     def forward(self, x):
         out = self.relu(self.stem1(x))
-        print(out.shape)
         out = self.maxpool(out)
-        print(out.shape)
         out = self.relu(self.stem2(out))
-        print(out.shape)
         out = self.maxpool(out)
-        print(out.shape)
-        out = self.inception1(out)
-        print(out.shape)
+        out = self.inception3a(out)
+        out = self.inception3b(out)
+        out = self.maxpool(out)
+        out = self.inception4a(out)
+        out = self.inception4b(out)
+        out = self.inception4c(out)
+        out = self.inception4d(out)
+        out = self.inception4e(out)
+        out = self.maxpool(out)
+        out = self.inception5a(out)
+        out = self.inception5b(out)
         out = self.avgpool(out)
-        # out = torch.flatten(out, 1)
-        # print(out.shape)
-        # out = self.dropout(out)
-        # out = self.fc(out)
-        
+        out = torch.flatten(out, 1)
+        out = self.dropout(out) # Dropout의 순서는? Flatten 전 or 후?
+        out = self.fc(out)
         return out
     
 
@@ -82,5 +92,6 @@ if __name__ == "__main__":
     x = torch.randn(2, 3, 224, 224)
     model = GoogLeNet()
     output = model(x)
+    summary(model, (3, 224, 224))
     # print(model)
     # print(output.shape)
