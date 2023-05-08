@@ -43,13 +43,16 @@ class Auxiliary(nn.Module):
         self.out_feature = out_feature
         self.avgpool = nn.AvgPool2d(kernel_size=5, stride=3,padding=0)
         self.conv1 = nn.Conv2d(in_channels=self.in_feature, out_channels=128, kernel_size=1, stride=1, padding=0)
+        self.relu = nn.ReLU()
         self.fc1 = nn.Linear(in_features=2048, out_features=1024)
-        self.fc2 = nn.Linear(in_features=1024, out_features=self.out_feature)
         self.dropout = nn.Dropout2d(p=0.7)
+        self.fc2 = nn.Linear(in_features=1024, out_features=self.out_feature)
+        
         
     def forward(self, x):
         out = self.avgpool(x)
         out = self.conv1(out)
+        out = self.relu(out)
         out = torch.flatten(out, 1)
         out = self.fc1(out)
         out = self.dropout(out)
