@@ -69,18 +69,16 @@ class Standard(nn.Module):
 class ResNetEncoder(nn.Module):# 34-layer plain
     def __init__(self, Block, block_num, channel_size=[64, 128, 256, 512], num_channels=3, residual_block=True):
         super(ResNetEncoder, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(num_channels, 64, kernel_size=7, stride=2, padding=3, bias=False, padding_mode='zeros'),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-        )
+        self.conv1 = nn.Conv2d(num_channels, 64, kernel_size=7, stride=2, padding=3, bias=False, padding_mode='zeros')
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.in_features = channel_size[0]
         self.residual_block = residual_block
-        self.layer2 = self._mask_layer(Block, num_layer=block_num[0], channel=channel_size[0])
-        self.layer3 = self._mask_layer(Block, num_layer=block_num[1], channel=channel_size[1], stride=2)
-        self.layer4 = self._mask_layer(Block, num_layer=block_num[2], channel=channel_size[2], stride=2)
-        self.layer5 = self._mask_layer(Block, num_layer=block_num[3], channel=channel_size[3], stride=2)
+        self.layer1 = self._mask_layer(Block, num_layer=block_num[0], channel=channel_size[0])
+        self.layer2 = self._mask_layer(Block, num_layer=block_num[1], channel=channel_size[1], stride=2)
+        self.layer3 = self._mask_layer(Block, num_layer=block_num[2], channel=channel_size[2], stride=2)
+        self.layer4 = self._mask_layer(Block, num_layer=block_num[3], channel=channel_size[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         
     def _mask_layer(self, Block, num_layer, channel, stride=1):
@@ -100,12 +98,12 @@ class ResNetEncoder(nn.Module):# 34-layer plain
         return nn.Sequential(*layers)
         
     def forward(self, x):
-        out = self.layer1(x)
+        out = self.relu(self.bn1(self.conv1(x)))
         out = self.maxpool(out)
+        out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = self.layer5(out)
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
         return out
