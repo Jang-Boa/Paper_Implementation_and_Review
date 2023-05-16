@@ -43,11 +43,11 @@ class Standard(nn.Module):
     def __init__(self, in_features, out_features, downsample=None, residual=True, stride=1):
         super(Standard, self).__init__()
         # BatchNorm에 bias가 포함되어 있으므로, conv2d는 bias = False호 설정
-        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # stride -> 
-        self.bn_1 = nn.BatchNorm2d(out_features)
+        self.conv1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # stride -> 
+        self.bn1 = nn.BatchNorm2d(out_features)
         
-        self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features*self.expansion , kernel_size=3, stride=1, padding=1, bias=False) 
-        self.bn_2 = nn.BatchNorm2d(out_features*self.expansion)
+        self.conv2 = nn.Conv2d(in_channels=out_features, out_channels=out_features*self.expansion , kernel_size=3, stride=1, padding=1, bias=False) 
+        self.bn2 = nn.BatchNorm2d(out_features*self.expansion)
         
         self.downsample = downsample
         self.residual = residual
@@ -56,13 +56,12 @@ class Standard(nn.Module):
     
     def forward(self, x):
         identity = x.clone()
-        out = self.relu(self.bn_1(self.conv_1(x)))
-        out = self.bn_2(self.conv_2(out))
+        out = self.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
         if self.downsample is not None: # DownSampling의 진행 여부
             identity = self.downsample(identity)
         if self.residual is True: # Residual Block의 사용 여부 
             out += identity # Shortcut connection : Identity Mapping (sufficient for address the degration problem)
-        
         out = self.relu(out)
         return out
 
@@ -153,11 +152,8 @@ class ResNet(nn.Module):
 
 if __name__ == '__main__':
     x = torch.rand(2, 3, 224, 224)
-    # res = resnet18()
-    # print(res(x).shape)
-    model = ResNet(name='resnet50', head='mlp', num_classes=2)
-    # print(model)
+    model = ResNet(name='resnet18', head='mlp', num_classes=2)
+    print(model)
     # summary(model, (3, 224, 224))
     output = model(x)
-    # print('-'*9)
     print(F.softmax(output))
