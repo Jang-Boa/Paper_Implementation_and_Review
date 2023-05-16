@@ -86,7 +86,7 @@ class Standard(nn.Module):
         return out
 
 class ResNet(nn.Module):# 34-layer plain
-    def __init__(self, Block, block_num, channel_size, num_channels=3, num_classes=1000, residual_block=True):
+    def __init__(self, Block=BottleNeck, block_num=[3, 4, 6, 3], channel_size=[64, 128, 256, 512], num_channels=3, num_classes=1000, residual_block=True):
         super(ResNet, self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(num_channels, 64, kernel_size=7, stride=2, padding=3, bias=False, padding_mode='zeros'),
