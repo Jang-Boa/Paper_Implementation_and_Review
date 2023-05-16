@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torchsummary import summary
 
 torch.manual_seed(311)
 
@@ -30,6 +31,7 @@ class BottleNeck(nn.Module):
     expansion = 4
     def __init__(self, in_features, out_features, downsample=None, residual=True, stride=1):
         super(BottleNeck, self).__init__()
+        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=1, stride=1, padding=0) # 1x1 conv
         self.bn_1 = nn.BatchNorm2d(out_features) # nn module 
 
         self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # 3x3 conv
@@ -127,16 +129,11 @@ class ResNet(nn.Module):# 34-layer plain
     
     def forward(self, x):
         out = self.layer1(x)
-        print(out.shape)
         out = self.maxpool(out)
         out = self.layer2(out)
-        print(out.shape)
         out = self.layer3(out)
-        print(out.shape)
         out = self.layer4(out)
-        print(out.shape)
         out = self.layer5(out)
-        print(out.shape)
         out = self.avgpool(out)
         out = torch.flatten(out, 1)
         out = F.softmax(self.fc(out), dim=1)
@@ -146,6 +143,7 @@ if __name__ == '__main__':
     x = torch.rand(2, 3, 224, 224)
     model = ResNet(Block=BottleNeck, block_num=[3, 4, 6, 3], channel_size=[64, 128, 256, 512], num_channels=3, num_classes=2, residual_block=True)
     print(model)
+    summary(model, (3, 224, 224))
     output = model(x)
     print('-'*10)
     print(output)
