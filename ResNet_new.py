@@ -27,8 +27,7 @@ class BottleNeck(nn.Module):
     def forward(self, x):
         identity = x.clone() # copy tensor 
         out = self.relu(self.bn_1(self.conv_1(x))) 
-        out = self.relu(self.bn_2(self.conv_2(out)))
-        out = self.bn_3(self.conv_3(out)) # the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
+        out = self.relu(self.bn_2(self.conv_2(out)))# the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
         if self.downsample is not None: # downsample 
             identity = self.downsample(identity)
         if self.residual is True: # gradient vanishing 방지를 위함
