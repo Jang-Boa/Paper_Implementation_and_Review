@@ -29,12 +29,11 @@ class BottleNeck(nn.Module):
         out = self.relu(self.bn1(self.conv1(x))) 
         out = self.relu(self.bn2(self.conv2(out)))# the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
         out = self.bn3(self.conv3(out))
-        out = self.relu(out)
         if self.downsample is not None: # downsample 
             identity = self.downsample(identity)
         if self.residual is True: # gradient vanishing 방지를 위함
             out += identity # shortcut connection simply perform identity mapping
-        
+        out = self.relu(out)
         return out
 
 class Standard(nn.Module):
@@ -94,7 +93,6 @@ class ResNetEncoder(nn.Module):# 34-layer plain
         self.in_features = channel*Block.expansion
         for loop in range(num_layer-1):
             layers.append(Block(self.in_features, channel, residual=self.residual_block))
-        
         return nn.Sequential(*layers)
         
     def forward(self, x):
@@ -153,8 +151,8 @@ class ResNet(nn.Module):
 
 if __name__ == '__main__':
     x = torch.rand(2, 3, 224, 224)
-    model = ResNet(name='resnet18', head='mlp', num_classes=2)
+    model = ResNet(name='resnet50', head='mlp', num_classes=2)
     print(model)
     # summary(model, (3, 224, 224))
     output = model(x)
-    print(F.softmax(output))
+    print(F.softmax(output, dim=1))
