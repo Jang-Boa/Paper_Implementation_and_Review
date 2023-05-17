@@ -10,14 +10,14 @@ class BottleNeck(nn.Module):
     expansion = 4
     def __init__(self, in_features, out_features, downsample=None, residual=True, stride=1):
         super(BottleNeck, self).__init__()
-        self.conv_1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=1, stride=1, padding=0) # 1x1 conv
-        self.bn_1 = nn.BatchNorm2d(out_features) # nn module 
+        self.conv1 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=1, stride=1, padding=0) # 1x1 conv
+        self.bn1 = nn.BatchNorm2d(out_features) # nn module 
 
-        self.conv_2 = nn.Conv2d(in_channels=out_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # 3x3 conv
-        self.bn_2 = nn.BatchNorm2d(out_features)
+        self.conv2 = nn.Conv2d(in_channels=out_features, out_channels=out_features, kernel_size=3, stride=stride, padding=1, bias=False) # 3x3 conv
+        self.bn2 = nn.BatchNorm2d(out_features)
     
-        self.conv_3 = nn.Conv2d(in_channels=out_features, out_channels=out_features * self.expansion, kernel_size=1, stride=1, padding=0, bias=False) # 1x1 conv, increasing dimension; 
-        self.bn_3 = nn.BatchNorm2d(out_features * self.expansion)
+        self.conv3 = nn.Conv2d(in_channels=out_features, out_channels=out_features * self.expansion, kernel_size=1, stride=1, padding=0, bias=False) # 1x1 conv, increasing dimension; 
+        self.bn3 = nn.BatchNorm2d(out_features * self.expansion)
         
         self.downsample = downsample
         self.residual = residual
@@ -26,13 +26,15 @@ class BottleNeck(nn.Module):
     
     def forward(self, x):
         identity = x.clone() # copy tensor 
-        out = self.relu(self.bn_1(self.conv_1(x))) 
-        out = self.relu(self.bn_2(self.conv_2(out)))# the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
+        out = self.relu(self.bn1(self.conv1(x))) 
+        out = self.relu(self.bn2(self.conv2(out)))# the output of each 3*3 layer, after BN and before other nonlinearity (ReLU/addition)
+        out = self.bn3(self.conv3(out))
+        out = self.relu(out)
         if self.downsample is not None: # downsample 
             identity = self.downsample(identity)
         if self.residual is True: # gradient vanishing 방지를 위함
             out += identity # shortcut connection simply perform identity mapping
-        out = self.relu(out)
+        
         return out
 
 class Standard(nn.Module):
