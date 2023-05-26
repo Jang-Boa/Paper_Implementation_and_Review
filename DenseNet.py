@@ -22,49 +22,71 @@ torch.manual_seed(311)
 #         return out
 
 class BottleneckLayer(nn.Module):
-    def __init__(self, in_feature, out_feature):
+    def __init__(self, in_feature, out_feature, k):
         super(BottleneckLayer, self).__init__()
         """ BN-ReLU-Conv1-BN-ReLU-Conv3
         Each layer only produces k output feature maps """
+        self.inter_feature = 4*k
         self.bn1 = nn.BatchNorm2d(in_feature)
         self.relu = nn.ReLu(inplace=True)
-        self.conv1 = nn.Conv2d(in_channels=in_feature, out_channels=out_feature, kernel_size=1, stride=1, padding=0)
+        self.conv1 = nn.Conv2d(in_channels=in_feature, out_channels=self.inter_feature, kernel_size=1, stride=1, padding=0)
         self.bn2 = nn.BatchNorm2d(in_feature)
-        self.conv2 = nn.Conv2d(in_channels=in_feature, out_channels=out_feature, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=self.inter_feature, out_channels=k, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         x_ = x.clone()
         out = self.conv1(self.relu(self.bn1(x)))
         out = self.conv2(self.relu(self.bn2(out)))
-        out = torch.cat([x_, out], 1)
+        out = torch.cat([x_, out], 1) # original concatenate new
         return out
 
 
 class TransitionLayer(nn.Module):
-    """ transition layers consist of a batch normalization layer and an 1 x 1 convolutional layer followed by a 2x2 average pooling layer """
+    """ transition layers consist of a batch normalization layer and an 1 x 1 convolutional layer followed by a 2x2 average pooling layer 
+    Reduce feature map size and number of channels """
     def __init__(self, in_feature, out_feature):
         super(TransitionLayer, self).__init__()
         self.bn = nn.BatchNorm2d(num_features=in_feature)
         self.relu = nn.ReLU(inplace=True)
         self.conv = nn.Conv2d(in_channels=in_feature, out_channels=out_feature, kernel_size=1, stride=1, padding=0)
-        self.avgpool = nn.AvgPool2d(kernel_size=2, stride=1)
+        self.avgpool = nn.AvgPool2d(kernel_size=2, stride=2)
     
     def forward(self, x):
         out = self.avgpool(self.conv(self.relu(self.bn(x))))
         return out
 
+
+class DenseBlock(nn.Module):
+    def __init__(self, in_feature, k, n_blocks):
+        super(DenseBlock, self).__init__()
+        self.inner_channel = 4 * k
+        self.bn = nn.BatchNorm2d(num_features=in_feature)
+        self.conv1 = nn.Conv2d(in_channels=in_feature, out_channels=self.inner_channel, kernel_size=1, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=self.inner_channel, out_channels=k, kernel_size=3, stride=2, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        
+    def _make_block(self,n_blocks):
+        for i in range(n_blocks):
+            layer_list = []
+            layer+
+
+    def forward(self, x):
+        out = self.conx(self.relu(self.bn(x)))
+
 class DenseNet(nn.Module):
-    def __init__(self, in_feature=3, num_classes=1000, dense_block=[6, 12, 24, 16], k=32):
+    def __init__(self, in_feature=3, num_classes=1000, dense_block=[6, 12, 24, 16], k=32, compression=0.5):
         super(DenseNet, self).__init__()
         self.in_feature = in_feature
         self.dense_block = dense_block
-        self.k = 2*k # 1st channel 
+        self.in_plane = 2*k # 1st channel 
         self.bn = nn.BatchNorm2d(in_channel=self.in_feature)
         self.relu = nn.ReLU(inplace=True)
-        self.conv = nn.Conv2d(in_channels=self.in_feature, out_channels=k*2, kernel_size=7, stride=2, padding=1)
+        self.conv = nn.Conv2d(in_channels=self.in_feature, out_channels=self.in_plane, kernel_size=7, stride=2, padding=1)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2)
-        for dense in dense_block:
-            self. 
+
+        # 1st Dense Block followed by Transition Layer
+        self.denseblock1 = DenseBlock(self.in_plane, )
+
         self.classifier = nn.Sequential(
             nn.AvgPool2d(kernel_size=7, stride=3), 
             nn.Linear(in_features=2048, out_features=num_classes)
