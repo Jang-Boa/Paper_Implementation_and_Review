@@ -5,22 +5,6 @@ from torchsummary import summary
 
 torch.manual_seed(311)
 
-# class DenseBlock(nn.Module):
-#     """DenseNet-BC structure with 4 dense blocks on 224 x 224 images """
-#     def __init__(self, in_feature, k):
-#         super(DenseBlock, self).__init__()
-#         self.bn = nn.BatchNorm2d(num_features=in_feature)
-#         self.conv1 = nn.Conv2d(in_channels=in_feature, out_channels=k*4, kernel_size=1, stride=1)
-#         self.conv2 = nn.Conv2d(in_channels=k*4, out_channels=k, kernel_size=3, stride=2, padding=1)
-#         self.relu = nn.ReLU(inplace=True)
-        
-#     def forward(self, x):
-#         residual = x.clone()
-#         out = self.conv1(x)
-#         out = self.conv2(x)
-#         out = torch.cat([out, residual])
-#         return out
-
 class BottleneckLayer(nn.Module):
     def __init__(self, in_feature, k):
         super(BottleneckLayer, self).__init__()
@@ -81,53 +65,50 @@ class DenseNet(nn.Module):
         self.bn = nn.BatchNorm2d(num_features=self.in_plane)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        
         # 1st Dense Block followed by Transition Layer
         self.denseblock1 = self._make_dense_block(self.in_plane, k, dense_block[0])
         self.in_plane = self.in_plane*2
         self.transition1 = TransitionLayer(self.in_plane*2, self.in_plane)
+        # 2nd Dense Block followed by Transition Layer
         self.denseblock2 = self._make_dense_block(self.in_plane, k, dense_block[1])
         self.in_plane = self.in_plane*2
         self.transition2 = TransitionLayer(self.in_plane*2, self.in_plane)
+        # 3rd Dense Block followed by Transition Layer
         self.denseblock3 = self._make_dense_block(self.in_plane, k, dense_block[2])
         self.in_plane = self.in_plane*2
         self.transition3 = TransitionLayer(self.in_plane*2, self.in_plane)
+        # 4th Dense Block followed by Transition Layer
         self.denseblock4 = self._make_dense_block(self.in_plane, k, dense_block[3])
-
-        # self.classifier = nn.Sequential(
-        #     nn.AvgPool2d(kernel_size=7, stride=3), 
-        #     nn.Linear(in_features=2048, out_features=num_classes)
-        # )
+        
+        self.in_plane = self.in_plane*2
+        self.bn2 = nn.BatchNorm2d(self.in_plane)
+        self.avgpool = nn.AvgPool2d(kernel_size=7, stride=3)
+        self.classifier = nn.Sequential(
+            nn.Linear(in_features=self.in_plane, out_features=num_classes, bias=True), 
+        )
         
     def _make_dense_block(self, in_feature, k, dense):
         layers = []
         for loop in range(dense):
-            # print(loop)
             layers.append(BottleneckLayer(in_feature=in_feature, k=k))
-            # dense_block[f"transition_{loop}"] = TransitionLayer(in_feature=in_feature, k=k)
             in_feature += k
         return nn.Sequential(*layers)
 
     
     def forward(self, x):
         out = self.relu(self.bn(self.conv(x)))
-        print(out.shape)
         out = self.maxpool(out)
-        print(out.shape)
         out = self.denseblock1(out)
-        print(out.shape)
         out = self.transition1(out)
-        print(out.shape)
         out = self.denseblock2(out)
-        print(out.shape)
         out = self.transition2(out)
-        print(out.shape)
         out = self.denseblock3(out)
-        print(out.shape)
         out = self.transition3(out)
-        print(out.shape)
         out = self.denseblock4(out)
-        print(out.shape)
-        # out = self.classifier(out)
+        out = self.avgpool(self.bn2(out))
+        out = torch.flatten(out,1)
+        out = self.classifier(out)
         return out
 
 if __name__ == '__main__':
