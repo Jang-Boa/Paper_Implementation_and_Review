@@ -170,7 +170,7 @@ class InceptionV2(nn.Module):
         return out
     
 if __name__ == '__main__':
-    x = torch.randn(3, 299, 299)
+    x = torch.randn(1, 3, 299, 299)
     model = InceptionV2()
     out = model(x)
     summary(model, (3, 299, 299))
