@@ -35,6 +35,18 @@ class DenseBlock(nn.Module):
             features.append(new_features)
         return torch.cat(features, 1)
     
+class TransitionBlock(nn.Module):
+    def __init__(self, in_feature, compression):
+        super(TransitionBlock, self).__init__()
+        self.bn = nn.BatchNorm2d(in_feature)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv = nn.Conv2d(in_channels=in_feature, out_channels=in_feature*compression, kernel_size=1, stride=1, padding=0, bias=False)
+        self.pool = nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+        
+    def forward(self, x):
+        out = self.pool(self.conv(self.relu(self.bn(x))))
+        return out
+    
 class DenseNet(nn.Module):
     def __init__(self, in_feature=3, out_feature=1000, num_dense_block=[6, 12, 24, 16], growth_rate=32, compression=0.5):
         super(DenseNet, self).__init__()
@@ -49,9 +61,9 @@ class DenseNet(nn.Module):
         )
         
         for idx, num_layer in enumerate(num_dense_block):
-            
             self.encoder.add_module("denseblock%d"%(idx+1), DenseBlock(initial_feature, num_layer, growth_rate))
-            
+            if idx != len(num_dense_block):
+                self.encoder.add_module("transition%d"%(idx+1), TransitionBlock())
     
     def forward(self, x):
         out = self.encoder(x)
