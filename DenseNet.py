@@ -19,9 +19,10 @@ class BottleneckLayer(nn.Module):
 
     def forward(self, x):
         x_ = x.clone()
-        out = self.conv1(self.relu(self.bn1(x)))
+        out = self.conv1(self.relu(self.bn1(x[-1])))
         out = self.conv2(self.relu(self.bn2(out)))
-        out = torch.cat([x_, out], 1) # original concatenate new
+        out = torch.cat([x_, out], 1) # original concatenate new -> 이 부분 수정이 필요, dense block에서 진행되어야 할 부분이 누락되어 있음
+        x.append(out) # YB > 아마도 리스트로 받아야 하지 않을까?
         return out
 
 
