@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+from torchsummary import summary
 
 torch.manual_seed(311)
 """ Rewrite 23.05.31 """
@@ -34,7 +35,8 @@ class DenseBlock(nn.Module):
         for name, layer in self.named_children():
             new_features = layer(features)
             features = torch.cat([features, new_features], 1)
-            print(name, features.size())
+            # print(name, features.size())
+        print(features.shape)
         return features
     
 class TransitionBlock(nn.Module):
@@ -83,7 +85,9 @@ class DenseNet(nn.Module):
     
 if __name__ == '__main__':
     x = torch.randn(2, 3, 224, 224)
-    model = DenseNet()
+    model = DenseNet(num_classes=10)# , num_dense_block=[6, 12, 32, 32], growth_rate=32)
     out = model(x)
-    print(model)
+    print(out)
+    # print(model)
     print(out.shape)
+    # print(summary(model, (3, 224, 224)))
