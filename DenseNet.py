@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+from torchsummary import summary
 
 torch.manual_seed(311)
 """ Rewrite 23.05.31 """
@@ -16,10 +17,18 @@ class DenseLayer(nn.Module):
         self.relu2 = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(in_channels=inter_channel, out_channels=growth_rate, kernel_size=3, stride=1, padding=1, bias=False)
     
+    def bn_function(self, inputs):
+        concated_features = torch.cat(inputs, 1) # inputs as List
+        bottleneck_output = self.conv1(self.relu1(self.bn1(concated_features)))
+        return bottleneck_output
+
     def forward(self, x):
-        out = self.conv1(self.relu1(self.bn1(x)))
-        out = self.conv2(self.relu2(self.bn2(out)))
-        return torch.cat([x, out], 1)
+        # out = self.conv1(self.relu1(self.bn1(x)))
+        # bottleneck_output = self.bn_function(x)
+        concated_features = torch.cat(x, 1) # inputs as List
+        bottleneck_output = self.conv1(self.relu1(self.bn1(concated_features)))
+        out = self.conv2(self.relu2(self.bn2(bottleneck_output)))
+        return out # torch.cat([x, out], 1)
 
 class DenseBlock(nn.Module):
     def __init__(self, in_feature, num_layer, growth_rate):
@@ -30,11 +39,14 @@ class DenseBlock(nn.Module):
             self.add_module("denselayer%d"%(idx+1), layer)
             
     def forward(self, init_feature):
+        # features = init_feature.clone()
         features = [init_feature]
         for name, layer in self.named_children():
-            new_features = layer(features[-1])
+            new_features = layer(features)
             features.append(new_features)
-        return torch.cat(features, 1)
+        out = torch.cat(features, 1)
+        print(out.shape)
+        return out
     
 class TransitionBlock(nn.Module):
     def __init__(self, in_feature, compression):
@@ -83,7 +95,9 @@ class DenseNet(nn.Module):
     
 if __name__ == '__main__':
     x = torch.randn(2, 3, 224, 224)
-    model = DenseNet()
+    model = DenseNet(num_classes=10)
     out = model(x)
-    print(model)
+    print(out)
+    # print(model)
     print(out.shape)
+    # print(summary(model, (3, 224, 224)))
