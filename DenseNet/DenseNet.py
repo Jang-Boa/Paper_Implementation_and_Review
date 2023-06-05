@@ -4,7 +4,7 @@ from collections import OrderedDict
 from torchsummary import summary
 
 torch.manual_seed(311)
-""" Rewrite 23.05.31 """
+""" Rewrite 23.06.05 """
 
 class DenseLayer(nn.Module):
     def __init__(self, in_feature, growth_rate):
