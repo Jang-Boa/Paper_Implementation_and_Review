@@ -45,37 +45,28 @@ class FCN(nn.Module):
     
     def forward(self, x):
         output = self.head(x)
-        output = self.downsample1(output)
-        output = self.downsample2(output)
-        output3 = self.downsample3(output)
-        print(output3.shape)
+        output1 = self.downsample1(output)
+        output2 = self.downsample2(output1)
+        output3 = self.downsample3(output2)
         output4 = self.downsample4(output3)
-        print(output4.shape)
         output = self.downsample5(output4)
-        print(output.shape)
         
         output = self.upsample5(output)
         output = output + output4
-        print(output.shape)
         output = self.upsample4(output)
-        print(output.shape)
         output = output + output3
-        print(output.shape)
         output = self.upsample3(output)
-        print(output.shape)
-        # output = torch.flatten(output, 1)
-        # output = self.fc(output)
         return output
 
 if __name__ == "__main__":
     x = torch.randn(2, 3, 32, 32)
-    layer_dict = {"block1": [64, 64, 'MP'], 
-                  "block2": [128, 128, 'MP'], 
-                  "block3": [256, 256, 256, 'MP'],
-                  "block4": [512, 512, 512, 'MP'],
-                  "block5": [512, 512, 512, 'MP']}
+    layer_dict = {
+        "block1": [64, 64, 'MP'], 
+        "block2": [128, 128, 'MP'], 
+        "block3": [256, 256, 256, 'MP'],
+        "block4": [512, 512, 512, 'MP'],
+        "block5": [512, 512, 512, 'MP']}
     model = FCN(layer_dict, num_classes=10)
-    # print(model)
-    # print(x.shape)
+    print(model)
     output = model(x)
-    # print(output.shape)
+    print(output.shape)
