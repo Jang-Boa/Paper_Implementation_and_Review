@@ -25,8 +25,8 @@ class FCN(nn.Module):
             nn.Linear(in_features=1024, out_features=num_classes)
         )
         self.upsample5 = nn.ConvTranspose2d(in_channels=512, out_channels=512, kernel_size=2, stride=2)
-        self.upsample4 = nn.ConvTranspose2d(in_channels=512, out_channels=3, kernel_size=16, stride=16)
-        # self.upsample5 = nn.Upsample(size=)
+        self.upsample4 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=2, stride=2)
+        self.upsample3 = nn.ConvTranspose2d(in_channels=256, out_channels=3, kernel_size=8, stride=8)
 
     def _make_downsample(self, in_feature, num_layer):
         block = []
@@ -47,16 +47,21 @@ class FCN(nn.Module):
         output = self.head(x)
         output = self.downsample1(output)
         output = self.downsample2(output)
-        output = self.downsample3(output)
-        output4 = self.downsample4(output)
+        output3 = self.downsample3(output)
+        print(output3.shape)
+        output4 = self.downsample4(output3)
         print(output4.shape)
         output = self.downsample5(output4)
         print(output.shape)
+        
         output = self.upsample5(output)
-        print(output.shape)
         output = output + output4
         print(output.shape)
         output = self.upsample4(output)
+        print(output.shape)
+        output = output + output3
+        print(output.shape)
+        output = self.upsample3(output)
         print(output.shape)
         # output = torch.flatten(output, 1)
         # output = self.fc(output)
