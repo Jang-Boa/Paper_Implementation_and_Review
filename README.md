@@ -1,6 +1,8 @@
 # Paper_Implementation_and_Review
 Implementations of deep learning paper and review
 - Study start from 2023.04.20
+- Notion Blog: https://bacoding.notion.site/Paper-Reading-Implementation-cdb92d04338d4c56a380deec2cd24128
+
 
 ## Table
 |Number|Model|Date|Paper|Link|
@@ -11,6 +13,7 @@ Implementations of deep learning paper and review
 |4|InceptionV2|2023.05.15|"Rethinking the Inception Architecture for Computer Vision"|https://arxiv.org/pdf/1512.00567.pdf|
 |5|DenseNet|2023.05.29|"Densely Connected Convolutional Networks"|https://openaccess.thecvf.com/content_cvpr_2017/papers/Huang_Densely_Connected_Convolutional_CVPR_2017_paper.pdf|
 |6|EfficientNet| |"EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks"|https://arxiv.org/abs/1905.11946|
+|7|FCN|2023.07.05|Fully Convolutional Networks for Semantic Segmentation|https://arxiv.org/abs/1411.4038|
 
 ## Model
 ---
@@ -21,3 +24,4 @@ Implementations of deep learning paper and review
 4. Inception V2
 5. DenseNet
 6. EfficientNet
+7. FCN: VGG16-based FCN-8 model
