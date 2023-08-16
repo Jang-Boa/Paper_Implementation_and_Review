@@ -15,6 +15,9 @@ Implementations of deep learning paper and review
 |6|EfficientNet| |"EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks"|https://arxiv.org/abs/1905.11946|
 |7|FCN|2023.07.05|"Fully Convolutional Networks for Semantic Segmentation"|https://arxiv.org/abs/1411.4038|
 |8|UNet|2023.07.10|"U-Net: Convolutional Networks for Biomedical Image Segmentation"|https://arxiv.org/abs/1505.04597|
+|9|SENet|2023.08.16|"Squeeze-and-Excitation Networks"|https://arxiv.org/abs/1709.01507|
+
+
 
 ## Model
 ---
@@ -27,3 +30,4 @@ Implementations of deep learning paper and review
 6. EfficientNet
 7. FCN: VGG16-based FCN-8 model
 8. UNet
+9. SENet: SEBlock
