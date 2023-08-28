@@ -1,4 +1,5 @@
 import torch
+import copy
 import torch.nn as nn
 from torch.nn import functional as F
 
@@ -21,7 +22,7 @@ class SEBlock(nn.Module):
         )
     
     def forward(self, x):
-        output1 = x
+        output1 = copy.deepcopy(x)
         print(output1.shape)
         output2 = self.squeeze(x)
         print(output2.shape)
