@@ -67,15 +67,6 @@ def initialize_model(model_name, num_classes, layer_name=None, feature_extract=F
 
     return model_ft
 
-class ResNetEncoder():
-    self.layer1 = model.layer1
-    
-class UnetDecoder():
-    def forward():
-        self.layer()
-        return 
-
-
 class UNet_Custom(nn.Module):
     def __init__(self, num_classes=1, weight_path=None, num_features=[128, 256, 512, 1024]):
         super(UNet_Custom, self).__init__()
@@ -89,7 +80,6 @@ class UNet_Custom(nn.Module):
         self.layer2 = child_list[5]
         self.layer3 = child_list[6]
         self.layer4 = child_list[7]
-        self.encoder = ResNetEncoder()
         
         self.up4 = self.__upsample__(in_feature=num_features[3]*2, out_feature=num_features[2])
         self.up3 = self.__upsample__(in_feature=num_features[2]*3, out_feature=num_features[1])
@@ -97,18 +87,28 @@ class UNet_Custom(nn.Module):
         self.up1 = self.__upsample__(in_feature=num_features[0]*3, out_feature=64)
         
         self.final_conv = nn.ConvTranspose2d(in_channels=64, out_channels=num_classes, kernel_size=2, stride=2)
+        
+        for m in self.modules(): # Using Kaiming initializer, initialize the weight of upsampling
+            if isinstance(m, nn.ConvTranspose2d):
+                torch.nn.init.kaiming_uniform_(m.weight.data)
                 
     def __upsample__(self, in_feature, out_feature):
         layers = []
         
         mid_feature = int(in_feature/2)
-        for layer in range(2):
+        for layer in range(2): 
             layers += [nn.Conv2d(in_channels=in_feature, out_channels=mid_feature, kernel_size=3, stride=1, padding=1), 
-                        nn.BatchNorm2d(num_features=mid_feature), 
-                        nn.ReLU()]
+                       nn.BatchNorm2d(num_features=mid_feature), 
+                       nn.ReLU()]
             in_feature = mid_feature
         layers += [nn.ConvTranspose2d(in_channels=mid_feature, out_channels=out_feature, kernel_size=2, stride=2)]
-            
+        
+        for m in self.modules(): # Using Kaiming initializer, initialize the weight of upsampling
+            if isinstance(m, nn.Conv2d):
+                torch.nn.init.kaiming_uniform_(m.weight.data)
+            if isinstance(m, nn.ConvTranspose2d):
+                torch.nn.init.kaiming_uniform_(m.weight.data)
+        
         return nn.Sequential(*layers)        
     
     def forward(self, x):
@@ -122,7 +122,6 @@ class UNet_Custom(nn.Module):
         x3 = self.layer3(x2)
         x4 = self.layer4(x3)
         
-        x = self.encoder()
         u4 = self.up4(x4)
         u4 = torch.cat((u4, x3), dim=1)
         
